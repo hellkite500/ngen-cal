@@ -2,7 +2,7 @@ import subprocess
 import pandas as pd # type: ignore
 from math import log
 import numpy as np # type: ignore
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 if TYPE_CHECKING:
     from ngen_cal import Calibratable, CalibrationMeta
@@ -104,6 +104,57 @@ def dds(start_iteration: int, iterations: int, calibration_object: 'Calibratable
             calibration_object.df.loc[n, str(i)] = new
         """
             At this point, we need to re-run cmd with the new parameters assigned correctly and evaluate the objective function
+        """
+        #Update the meta info and prepare for next iteration
+        #Pass the parameter and interation columns of the object we are calibrating to the update function
+        meta.update_config(i, calibration_object.df[[str(i), 'param']], calibration_object.id)
+        #Run cmd Again...
+        print("Running {} for iteration {}".format(meta.cmd, i))
+        _execute(meta)
+        _evaluate(i, calibration_object, meta)
+
+def parameter_sensitivity(start_iteration: int, iterations: int, calibration_objects: Sequence['CalibrationCatchment'], meta: 'CalibrationMeta'):
+    """
+        Runs simulations to perform parameter sensitivity of all calibartion_objects
+    """
+    if iterations < 1:
+        raise(ValueError("iterations must be >= 1"))
+    if start_iteration > iterations:
+        raise(ValueError("start_iteration must be <= iterations"))
+
+    if start_iteration == 0:
+        #We are starting a new calibration and do not have an initial output state to evaluate, compute it
+        #Need initial states  (iteration 0) to start DDS loop
+        print("Running {} to produce initial simulation".format(meta.cmd))
+        _execute(meta)
+        for calibration_object in calibration_objects:
+            _evaluate(0, calibration_object, meta)
+        start_iteration += 1
+    #precompute sigma for each variable based on neighborhood_size and bounds
+    for calibration_object in calibration_objects:
+        calibration_object.df['sigma'] = len(calibration_object.df)*(calibration_object.df['max'] - calibration_object.df['min'])
+    for i in range(start_iteration, iterations+1):
+        #Each iteration permutes the object param space
+        for calibration_object in calibration_objects:
+            #each object selects new random parameters
+            for n in calibration_object.variables:
+                new = calibration_object.df.loc[n, str(i-1)] + calibration_object.df.loc[n, 'sigma']*np.random.normal(0,1)
+                lower =  calibration_object.df.loc[n, 'min']
+                upper = calibration_object.df.loc[n, 'max']
+                #print( new )
+                #print( lower )
+                #print( upper )
+                if new < lower:
+                    new = lower + (lower - new)
+                    if new > upper:
+                        new = lower
+                elif new > upper:
+                    new = upper - (new - upper)
+                    if new < lower:
+                        new = upper
+                calibration_object.df.loc[n, str(i)] = new
+        """
+            At this point, we need to re-run cmd with the new parameters assigned correctly
         """
         #Update the meta info and prepare for next iteration
         #Pass the parameter and interation columns of the object we are calibrating to the update function

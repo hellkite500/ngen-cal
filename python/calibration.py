@@ -2,7 +2,7 @@
 from pathlib import Path
 from ngen_cal.configuration import Configuration
 from ngen_cal.meta import CalibrationMeta
-from ngen_cal.search import dds
+from ngen_cal.search import dds, parameter_sensitivity
 
 def main(config_file, catchment_data, nexus_data, crosswalk, restart):
     """
