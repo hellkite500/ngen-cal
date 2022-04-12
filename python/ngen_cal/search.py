@@ -161,5 +161,7 @@ def parameter_sensitivity(start_iteration: int, iterations: int, calibration_obj
         meta.update_config(i, calibration_object.df[[str(i), 'param']], calibration_object.id)
         #Run cmd Again...
         print("Running {} for iteration {}".format(meta.cmd, i))
+        #Make sure to only execute ONCE, not for each object
         _execute(meta)
+        #Make sure to evaluate each object (loop)
         _evaluate(i, calibration_object, meta)

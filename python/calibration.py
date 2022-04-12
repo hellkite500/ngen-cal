@@ -25,6 +25,7 @@ def main(config_file, catchment_data, nexus_data, crosswalk, restart):
     """
 
     #TODO move most of this to utils module
+    #ngen_bin = "mpirun"
     ngen_bin = "ngen"
     ngen_args = '{} "" {} "" {}'.format(catchment_data, nexus_data, config_file)
 
@@ -45,6 +46,14 @@ def main(config_file, catchment_data, nexus_data, crosswalk, restart):
     #that works in a more sophisticated manner.
     for catchment in config.catchments:
         dds(start_iteration, iterations, catchment, meta)
+
+
+def parameter_sensitivity(config_file, catchment_data, nexus_data, crosswalk, restart):
+    """
+
+    """
+    #Stub for running parameter sensitivity
+    parameter_sensitivity(start_iteration, iterations, config.catchments, meta)
 
 if __name__ == "__main__":
 
